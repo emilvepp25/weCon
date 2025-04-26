@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Business Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script> -->
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --success-color: #4CAF50; /* Green */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --header-height: 56px; /* Define header height */
+    }
+
+    /* --- Base Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+     html, body {
+        overscroll-behavior-y: contain; /* Prevents pull-to-refresh */
+        overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+    body {
+      font-family: 'Inter', sans-serif; background-color: var(--background-light);
+      color: var(--text-dark); min-height: 100vh;
+      padding-top: var(--header-height); /* Space for sticky header */
+      padding-bottom: calc(60px + var(--spacing-unit)); /* Space for bottom nav */
+      max-width: 420px; margin: 0 auto; position: relative;
+    }
+    a { color: var(--primary-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; border: none; border-radius: var(--border-radius); transition: background-color 0.3s, transform 0.1s; }
+    button:active { transform: translateY(1px); }
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color); color: #FFFFFF; padding: 8px 15px; /* Adjusted padding */
+      font-size: 0.9rem; font-weight: 600; text-align: center; line-height: 1.4;
+    }
+    .primary-button:hover { background-color: #192F4A; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: bottom; }
+
+    /* --- Header (Sticky) --- */
+    .header {
+        background-color: var(--background-dark); padding: 10px var(--spacing-unit);
+        display: flex; align-items: center; justify-content: space-between;
+        position: fixed; /* Make header sticky */
+        top: 0;
+        left: 50%; /* Center fixed header */
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 420px; /* Match body max-width */
+        z-index: 100; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); height: var(--header-height);
+    }
+    .header-logo-container { display: flex; align-items: center; }
+    .header-logo-img { width: 30px; height: 30px; object-fit: contain; }
+    .header-logo-text { font-size: 1.1rem; font-weight: 600; margin-left: 8px; color: var(--primary-color); }
+    .header-icons-right { display: flex; align-items: center; gap: var(--spacing-unit); }
+    .header-icon {
+      position: relative; cursor: pointer; color: var(--text-medium);
+      display: flex; align-items: center; justify-content: center;
+      width: 40px; height: 40px; margin: -8px;
+      text-decoration: none; /* For link icons */
+    }
+    .header-icon .material-symbols-outlined { font-size: 24px; }
+    .badge {
+      position: absolute; top: 0px; right: 0px; background-color: #D0021B;
+      color: white; font-size: 10px; font-weight: bold; border-radius: 50%;
+      padding: 2px 5px; min-width: 16px; text-align: center; line-height: 1;
+      display: none; z-index: 1;
+    }
+    .badge.visible { display: block; }
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit); /* Space between elements */
+    }
+
+    /* --- Business Banner Style (Main Page Banner) --- */
+    .business-page-banner {
+        width: 100%;
+        border-radius: var(--border-radius);
+        overflow: hidden; /* Ensure image respects border radius */
+        box-shadow: var(--box-shadow);
+        background-color: var(--background-dark); /* Placeholder bg */
+        line-height: 0; /* Prevent extra space below image */
+    }
+    .business-page-banner img {
+        display: block; /* Remove extra space below image */
+        width: 100%;
+        height: auto; /* Maintain aspect ratio */
+    }
+
+     /* --- Business Offers List Styles --- */
+    .business-list-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-top: calc(var(--spacing-unit) * 0.5);
+        margin-bottom: calc(var(--spacing-unit) * 0.5);
+    }
+
+    .business-offers-list {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing-unit) * 1.2);
+    }
+
+    .business-offer-item {
+        background-color: var(--background-dark);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+        /* Padding moved to inner container */
+    }
+
+    .business-offer-item img.offer-banner-image {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    /* Container for percentage and button */
+    .offer-details-actions {
+        padding: var(--spacing-unit); /* Add padding inside */
+        display: flex;
+        justify-content: space-between; /* Space between percentage and button */
+        align-items: center; /* Vertically align items */
+        gap: var(--spacing-unit); /* Add gap between items */
+    }
+
+    .offer-percentage {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--success-color); /* Use success color for percentage */
+        flex-shrink: 0; /* Prevent percentage text from shrinking */
+    }
+    /* Share Link Button style is primary-button */
+
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(255, 255, 255, 0.9);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        z-index: 1001; transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+    #pageLoading.hidden { opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0s; }
+    #pageLoading .loading-text { font-size: 1.1rem; font-weight: 500; color: var(--text-dark); }
+    #pageLoading .spinner {
+      border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color);
+      border-radius: 50%; width: 30px; height: 30px;
+      animation: spin 1s linear infinite; margin-bottom: 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Bottom Navigation (Wrap in <a>, Icon Only) --- */
+    .bottom-nav {
+      background-color: var(--background-dark); border-top: 1px solid #e0e0e0;
+      width: 100%; max-width: 420px; display: flex; justify-content: space-around;
+      align-items: center; padding: 5px 0; position: fixed; bottom: 0;
+      left: 50%; transform: translateX(-50%); z-index: 100; height: 60px;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+    }
+    .nav-item {
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-light); flex: 1; padding: 10px 0;
+      transition: color 0.2s ease; height: 100%;
+      text-decoration: none; /* Remove underline from links */
+    }
+    .nav-item.active { color: var(--primary-color); }
+    .nav-item .material-symbols-outlined { font-size: 28px; margin-bottom: 0; }
+
+    .center-button-nav {
+      display: flex; align-items: center; justify-content: center;
+      width: 50px; height: 50px; border-radius: 50%;
+      background-color: var(--background-dark); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      margin-top: -20px; cursor: pointer; border: 3px solid var(--background-light);
+      position: relative; flex-shrink: 0; transition: border-color 0.2s ease;
+      text-decoration: none; /* Remove underline from links */
+    }
+    .center-button-nav.active { border-color: var(--primary-color); }
+    .center-button-nav img { width: 28px; height: 28px; object-fit: contain; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading" class="hidden"> <!-- Initially hidden -->
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo-container">
+       <a href="home.html" style="display: flex; align-items: center; text-decoration: none;">
+           <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+           <span class="header-logo-text">WeConnect</span>
+        </a>
+    </div>
+    <div class="header-icons-right">
+      <a href="notifications.html" class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span>
+      </a>
+      <a href="messages.html" class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span>
+      </a>
+       <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content - Business Offers -->
+  <main class="main-content">
+
+    <!-- Business Page Banner -->
+    <div class="business-page-banner">
+        <!-- Updated Banner Source -->
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/Dark%20Brown%20And%20Beige%20Minimalist%20Notary%20Service%20banner_20250425_184908_0000.png?alt=media&token=52fa916d-763b-4615-bb04-7a0815986781" alt="WeConnect Business Partnerships Banner">
+    </div>
+
+    <h2 class="business-list-title">Featured Partner Offers</h2>
+
+    <!-- Sample Business Offers List with Banners -->
+    <div class="business-offers-list">
+
+        <!-- Offer Item 1 -->
+        <div class="business-offer-item">
+            <img src="assets/images/banner1.png" alt="Business Offer 1" class="offer-banner-image">
+            <div class="offer-details-actions"> <!-- Changed class -->
+                <span class="offer-percentage">10% Offer</span> <!-- Added Percentage -->
+                <button class="primary-button share-link-button" data-offer-id="offer01">Get Link</button>
+            </div>
+        </div>
+
+        <!-- Offer Item 2 -->
+        <div class="business-offer-item">
+            <img src="assets/images/banner2.png" alt="Business Offer 2" class="offer-banner-image">
+             <div class="offer-details-actions"> <!-- Changed class -->
+                <span class="offer-percentage">15% Offer</span> <!-- Added Percentage -->
+                <button class="primary-button share-link-button" data-offer-id="offer02">Get Link</button>
+            </div>
+        </div>
+
+        <!-- Offer Item 3 -->
+        <div class="business-offer-item">
+            <img src="assets/images/banner3.png" alt="Business Offer 3" class="offer-banner-image">
+             <div class="offer-details-actions"> <!-- Changed class -->
+                <span class="offer-percentage">5% Offer</span> <!-- Added Percentage -->
+                <button class="primary-button share-link-button" data-offer-id="offer03">Get Link</button>
+            </div>
+        </div>
+
+        <!-- Offer Item 4 -->
+        <div class="business-offer-item">
+            <img src="assets/images/banner4.png" alt="Business Offer 4" class="offer-banner-image">
+             <div class="offer-details-actions"> <!-- Changed class -->
+                 <span class="offer-percentage">20% Offer</span> <!-- Added Percentage -->
+                <button class="primary-button share-link-button" data-offer-id="offer04">Get Link</button>
+            </div>
+        </div>
+
+        <!-- Offer Item 5 -->
+        <div class="business-offer-item">
+            <img src="assets/images/banner5.png" alt="Business Offer 5" class="offer-banner-image">
+             <div class="offer-details-actions"> <!-- Changed class -->
+                <span class="offer-percentage">12% Offer</span> <!-- Added Percentage -->
+                <button class="primary-button share-link-button" data-offer-id="offer05">Get Link</button>
+            </div>
+        </div>
+
+    </div> <!-- End Business Offers List -->
+
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <!-- Content Link -->
+    <a href="content.html" class="nav-item" title="Content">
+      <span class="material-symbols-outlined">edit_square</span> <!-- Use consistent icon -->
+    </a>
+    <!-- Tools Link -->
+    <a href="tools.html" class="nav-item" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </a>
+    <!-- Home Link (Center Button) -->
+    <a href="home.html" class="center-button-nav" title="Home"> <!-- Not active -->
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home">
+    </a>
+    <!-- Business Link (Active on this page) -->
+    <a href="business.html" class="nav-item active" title="Business"> <!-- Active -->
+      <span class="material-symbols-outlined">business_center</span>
+    </a>
+    <!-- Profile Link -->
+    <a href="userprofile.html" class="nav-item" title="Profile">
+      <span class="material-symbols-outlined">account_circle</span>
+    </a>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    // Get Firebase service instances
+    const auth = firebase.auth();
+    // const db = firebase.firestore(); // Uncomment if fetching real offers later
+
+    // DOM Elements
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+    const signOutIcon = document.getElementById('signOutIcon');
+    const businessOffersContainer = document.querySelector('.business-offers-list'); // For dynamic loading later
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            console.log("User is signed in:", user.uid);
+            pageLoadingElement.classList.add('hidden');
+            // Future: fetchBusinessOffers(user.uid); // Load real offers here
+        } else {
+            console.log("User is signed out. Redirecting to signin.html");
+             pageLoadingElement.classList.add('hidden'); // Hide loading before redirect
+            window.location.href = 'signin.html';
+        }
+    });
+
+    // --- Sign Out Logic ---
+    if (signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) {
+                try {
+                    pageLoadingElement.classList.remove('hidden');
+                    pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                    // onAuthStateChanged handles redirect
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out. Please try again.");
+                    pageLoadingElement.classList.add('hidden');
+                }
+            }
+        });
+    }
+
+    // --- Navigation Handling (Using standard links) ---
+    // No special JS needed for basic nav clicks anymore
+
+    // --- Handle "Get Link" Button Clicks (Sample/Placeholder) ---
+    document.querySelectorAll('.share-link-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const offerId = event.target.dataset.offerId;
+             const user = auth.currentUser;
+             if (!user) {
+                 alert("Please sign in to get your link.");
+                 return;
+             }
+             // **IMPORTANT**: Placeholder link structure. Replace with actual logic.
+             const affiliateLink = `https://weconnect-ph.online/offer/${offerId}?ref=${user.uid}`;
+
+             // Try using the Web Share API if available
+             if (navigator.share) {
+                 navigator.share({
+                     title: `WeConnect Business Offer!`,
+                     text: `Check out this exciting offer I found on WeConnect!`,
+                     url: affiliateLink
+                 }).then(() => {
+                     console.log('Link shared successfully');
+                 }).catch((error) => {
+                     // Ignore AbortError which happens if user cancels share dialog
+                     if (error.name !== 'AbortError') {
+                         console.error('Error sharing link:', error);
+                         copyToClipboard(affiliateLink, event.target); // Fallback for other errors
+                     } else {
+                          console.log('Share cancelled by user.');
+                     }
+                 });
+             } else {
+                 copyToClipboard(affiliateLink, event.target); // Fallback for browsers without Share API
+             }
+        });
+    });
+
+    // Helper function to copy text to clipboard and provide feedback
+    function copyToClipboard(text, buttonElement) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = buttonElement.textContent;
+            buttonElement.textContent = 'Copied!';
+            buttonElement.disabled = true;
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+                buttonElement.disabled = false;
+            }, 1500);
+        }).catch(err => {
+            console.error('Failed to copy link: ', err);
+            alert('Failed to copy link. Please copy it manually:\n' + text);
+        });
+    }
+
+    // --- Prevent multi-touch zoom ---
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // --- Optional: Add JS for fetching real business offers later ---
+    // async function fetchBusinessOffers(userId) {
+    //    pageLoadingElement.classList.remove('hidden');
+    //    try {
+    //        const offersSnapshot = await db.collection('business_offers').where('active', '==', true).orderBy('priority', 'desc').get();
+    //        businessOffersContainer.innerHTML = ''; // Clear placeholders
+    //        if (offersSnapshot.empty) {
+    //            businessOffersContainer.innerHTML = '<p>No active offers found.</p>';
+    //        } else {
+    //            offersSnapshot.forEach(doc => {
+    //                const offer = doc.data();
+    //                const offerElement = document.createElement('div');
+    //                offerElement.classList.add('business-offer-item');
+    //                offerElement.innerHTML = `
+    //                    <img src="${escapeHtml(offer.bannerImageUrl)}" alt="${escapeHtml(offer.name)}" class="offer-banner-image">
+    //                    <div class="offer-details-actions">
+    //                        <span class="offer-percentage">${escapeHtml(offer.percentageText || 'N/A Offer')}</span>
+    //                        <button class="primary-button share-link-button" data-offer-id="${doc.id}">Get Link</button>
+    //                    </div>
+    //                `;
+    //                businessOffersContainer.appendChild(offerElement);
+    //            });
+    //            // Re-attach event listeners after dynamic creation
+    //             document.querySelectorAll('.share-link-button').forEach(button => { /* attach listener logic here */ });
+    //        }
+    //    } catch (error) {
+    //        console.error("Error fetching business offers:", error);
+    //        businessOffersContainer.innerHTML = '<p style="color: red;">Error loading offers.</p>';
+    //    } finally {
+    //        pageLoadingElement.classList.add('hidden');
+    //    }
+    // }
+
+  </script>
+
+</body>
+</html>

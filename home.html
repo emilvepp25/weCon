@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeConnect - Home</title> <!-- Updated Title -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+   <!-- Firebase v8 SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <!-- End Firebase v8 SDK Scripts -->
+
+  <style>
+    /* --- CSS Variables --- */
+    :root {
+      --primary-color: #1F3A5C; /* Dark Blue */
+      --background-light: #f0f2f5; /* Light Grey Background */
+      --background-dark: #ffffff; /* White Card Background */
+      --text-dark: #333; /* Dark Text */
+      --text-medium: #555; /* Medium Text */
+      --text-light: #777; /* Light Text */
+      --accent-color: #4A90E2; /* Blue Accent */
+      --spacing-unit: 15px; /* Base spacing */
+      --border-radius: 8px;
+      --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* --- Base Styles --- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding-bottom: calc(60px + var(--spacing-unit)); /* Space for bottom nav + padding */
+      max-width: 420px; /* Limit width for mobile view */
+      margin: 0 auto; /* Center the content area */
+      overflow-x: hidden; /* Prevent horizontal scroll */
+      position: relative;
+    }
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: background-color 0.3s, transform 0.1s;
+    }
+    button:active {
+        transform: translateY(1px); /* Subtle press effect */
+    }
+
+    /* --- Utility Classes --- */
+    .primary-button {
+      background-color: var(--primary-color);
+      color: #FFFFFF;
+      padding: 10px var(--spacing-unit);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .primary-button:hover {
+      background-color: #192F4A; /* Slightly darker primary */
+    }
+     .secondary-button {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        padding: 10px var(--spacing-unit);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+    }
+     .secondary-button:hover {
+        background-color: rgba(31, 58, 92, 0.05); /* Light hover effect */
+     }
+
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+
+
+    /* --- Header --- */
+    .header {
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+      padding: 10px var(--spacing-unit);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; /* Keep header sticky */
+      top: 0; /* Stick to the top */
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      height: 56px;
+    }
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .header-logo-img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+    .header-logo-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 8px;
+      color: var(--primary-color);
+    }
+    .header-icons-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-unit);
+    }
+    .header-icon {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-medium);
+      display: flex; /* Center icon */
+      align-items: center;
+      justify-content: center;
+      width: 40px; /* Make tappable area larger */
+      height: 40px;
+       margin: -8px; /* Negative margin to compensate for padding/size increase */
+    }
+     .header-icon .material-symbols-outlined {
+      font-size: 24px;
+    }
+    .badge {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background-color: #D0021B; /* Red badge */
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 50%;
+      padding: 2px 5px;
+      min-width: 16px;
+      text-align: center;
+      line-height: 1;
+      display: none; /* Hidden by default */
+      z-index: 1; /* Above icon */
+    }
+    .badge.visible {
+      display: block;
+    }
+
+
+    /* --- Main Content Area --- */
+    .main-content {
+      padding: var(--spacing-unit);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit); /* Space between sections */
+    }
+
+    /* --- Income Analytics Card --- */
+    .income-analytics-card {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+    }
+    .income-analytics-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: calc(var(--spacing-unit) * 0.8);
+    }
+    .income-analytics-card-header .user-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .income-analytics-card-header .user-info .user-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .income-analytics-card-header .user-info .user-id {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+    .income-details {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      margin-bottom: var(--spacing-unit);
+      text-align: center;
+      gap: var(--spacing-unit);
+    }
+     .income-source {
+         flex: 1;
+         padding: 0 5px;
+     }
+    .income-details .income-amount {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+     .income-details .income-label {
+      font-size: 0.8rem;
+      color: var(--text-medium);
+    }
+
+    .income-actions {
+      display: flex;
+      gap: calc(var(--spacing-unit) * 0.7);
+    }
+    .income-actions button {
+      flex: 1;
+    }
+
+    /* --- Quick Actions Grid (12 Icons) --- */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr); /* Keep 4 columns for 3 rows */
+      gap: calc(var(--spacing-unit) * 0.7);
+    }
+    .grid-item {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: calc(var(--spacing-unit) * 0.6) 5px; /* Adjust padding slightly */
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      min-height: 85px; /* Adjust height to fit icon + title */
+      text-decoration: none;
+      color: inherit;
+    }
+    .grid-item:active {
+        transform: scale(0.95);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .grid-item .icon-background {
+      background-color: #e8f0fe;
+      border-radius: 6px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 5px; /* Space between icon and title */
+    }
+    .grid-item .material-symbols-outlined {
+      font-size: 24px;
+      color: var(--primary-color);
+    }
+    /* Style for the icon titles */
+    .grid-item .item-label {
+        font-size: 11px; /* Small font size */
+        font-weight: 500;
+        color: var(--text-medium);
+        line-height: 1.2;
+        margin-top: 2px;
+    }
+
+    /* --- Recent Activities Section --- */
+    .recent-activities {
+      background-color: var(--background-dark);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-unit);
+      box-shadow: var(--box-shadow);
+    }
+    .recent-activities h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: var(--spacing-unit);
+      color: var(--text-dark);
+    }
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-unit);
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: var(--spacing-unit);
+      border-bottom: 1px solid #eee;
+    }
+     .activity-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+     }
+    .activity-details {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      margin-right: var(--spacing-unit);
+    }
+    .activity-icon-container {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e8f0fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: calc(var(--spacing-unit) * 0.7);
+    }
+    .activity-icon-container .material-symbols-outlined {
+      font-size: 20px;
+      color: var(--primary-color);
+    }
+    .activity-info {
+      flex-grow: 1;
+    }
+    .activity-info .description {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-dark);
+       margin-bottom: 2px;
+    }
+    .activity-info .date {
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+    .activity-amount {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-align: right;
+    }
+     .activity-amount.credit {
+        color: #4CAF50; /* Green for credit (income) */
+     }
+     .activity-amount.debit {
+        color: #F44336; /* Red for debit (expense/payout) */
+     }
+
+    /* --- Info Banner --- */
+    .info-banner {
+      background-color: #FFFBEB; /* Light yellow */
+      border: 1px solid #FEEBC8; /* Yellow border */
+      color: #926319; /* Dark yellow text */
+      border-radius: var(--border-radius);
+      padding: calc(var(--spacing-unit) * 0.8) var(--spacing-unit);
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* --- Loading Indicator --- */
+    #pageLoading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001; /* Above other content */
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+     #pageLoading.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0s;
+    }
+     #pageLoading .loading-text {
+         font-size: 1.1rem;
+         font-weight: 500;
+         color: var(--text-dark);
+     }
+    #pageLoading .spinner {
+         border: 4px solid #f3f3f3;
+         border-top: 4px solid var(--primary-color);
+         border-radius: 50%;
+         width: 30px;
+         height: 30px;
+         animation: spin 1s linear infinite;
+         margin-bottom: 15px;
+    }
+     @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+
+    /* --- Bottom Navigation --- */
+    .bottom-nav {
+      background-color: var(--background-dark);
+      border-top: 1px solid #e0e0e0;
+      width: 100%;
+      max-width: 420px; /* Match body max-width */
+      display: flex;
+      justify-content: space-around;
+      align-items: center; /* Vertically align icons */
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      height: 60px;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05); /* Subtle top shadow */
+    }
+    .nav-item {
+      display: flex;
+      /* flex-direction: column; NO LONGER NEEDED */
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-light);
+      flex: 1;
+      padding: 10px 0; /* Adjust padding for icon-only */
+      transition: color 0.2s ease;
+      height: 100%; /* Ensure items fill height */
+    }
+    .nav-item.active {
+       color: var(--primary-color);
+    }
+    .nav-item .material-symbols-outlined {
+      font-size: 28px; /* Slightly larger icon */
+      /* margin-bottom: 2px; NO LONGER NEEDED */
+    }
+    /* Style for the center button (logo) */
+    .center-button-nav {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         width: 50px;
+         height: 50px;
+         border-radius: 50%;
+         background-color: var(--background-dark);
+         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+         margin-top: -20px;
+         cursor: pointer;
+         border: 3px solid var(--background-light);
+         position: relative;
+         flex-shrink: 0;
+    }
+     /* Add active style to the center button */
+    .center-button-nav.active {
+        border-color: var(--primary-color); /* Highlight border when active */
+    }
+     .center-button-nav img {
+         width: 28px;
+         height: 28px;
+         object-fit: contain;
+     }
+     /* Removed .nav-item-label styles */
+
+  </style>
+</head>
+<body>
+
+  <!-- Page Loading Indicator -->
+  <div id="pageLoading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading...</p>
+  </div>
+
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo-container">
+      <!-- Assuming logo path is correct relative to index/root or absolute -->
+      <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="WeConnect Logo" class="header-logo-img">
+      <span class="header-logo-text">WeConnect</span>
+    </div>
+    <div class="header-icons-right">
+      <!-- Notifications Icon -->
+      <div class="header-icon" id="notificationsIcon" title="Notifications">
+        <span class="material-symbols-outlined">notifications</span>
+        <span id="notificationBadge" class="badge"></span> <!-- Dynamic badge -->
+      </div>
+      <!-- Messages Icon -->
+      <div class="header-icon" id="messagesIcon" title="Messages">
+        <span class="material-symbols-outlined">mail</span>
+        <span id="messageBadge" class="badge"></span> <!-- Dynamic badge -->
+      </div>
+       <!-- Sign Out icon -->
+      <div id="signOutIcon" class="header-icon" title="Sign Out">
+        <span class="material-symbols-outlined">logout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Income Analytics Card -->
+    <div class="income-analytics-card">
+      <div class="income-analytics-card-header">
+        <div class="user-info">
+            <div class="user-name" id="userName">Welcome, Loading...</div>
+            <div class="user-id" id="memberId">ID: Loading...</div>
+        </div>
+      </div>
+      <div class="income-details">
+        <div class="income-source">
+          <div class="income-amount" id="unilevelIncome">₱0.00</div> <!-- Corrected ID and Label -->
+          <div class="income-label">Unilevel Income</div>
+        </div>
+        <div class="income-source">
+           <div class="income-amount" id="tokenBalance">₱0.00</div> <!-- Corrected ID and Label -->
+           <div class="income-label">Token Balance</div>
+        </div>
+      </div>
+      <div class="income-actions">
+         <!-- Added data-action attributes for potential specific JS handling -->
+        <button class="primary-button" data-action="view-unilevel-details">Details</button>
+        <button class="primary-button" data-action="exchange-tokens">Exchange</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions Grid (12 Icons) -->
+    <div class="quick-actions-grid">
+      <!-- Guru Item -->
+      <div class="grid-item" data-action="content-guru" title="Content Guru">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">auto_awesome</span>
+        </div>
+        <div class="item-label">Guru</div>
+      </div>
+      <!-- Media Item -->
+      <div class="grid-item" data-action="media" title="Manage Media">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">perm_media</span> <!-- Using perm_media for general media -->
+        </div>
+        <div class="item-label">Media</div>
+      </div>
+      <!-- Analytics Item -->
+      <div class="grid-item" data-action="analytics" title="Performance Analytics">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">analytics</span>
+        </div>
+        <div class="item-label">Analytics</div>
+      </div>
+       <!-- Community Item -->
+      <div class="grid-item" data-action="community" title="Community/Network">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+        <div class="item-label">Community</div>
+      </div>
+      <!-- Monetization Item -->
+       <div class="grid-item" data-action="monetization" title="Earnings">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+        <div class="item-label">Earnings</div>
+      </div>
+       <!-- Affiliates Item -->
+      <div class="grid-item" data-action="affiliates" title="Affiliates & Referrals">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">link</span>
+        </div>
+        <div class="item-label">Affiliates</div>
+      </div>
+       <!-- Engagement Item -->
+       <div class="grid-item" data-action="engagement" title="Audience Engagement">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">monitoring</span>
+        </div>
+        <div class="item-label">Audience</div>
+      </div>
+      <!-- Automation Item -->
+      <div class="grid-item" data-action="automation" title="Marketing Automation">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">auto_mode</span> <!-- Using auto_mode for automation -->
+        </div>
+        <div class="item-label">Automation</div>
+      </div>
+       <!-- Wallet Item -->
+      <div class="grid-item" data-action="wallet" title="Wallet & Transactions">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">account_balance_wallet</span>
+        </div>
+        <div class="item-label">Wallet</div>
+      </div>
+       <!-- Marketplace Item -->
+       <div class="grid-item" data-action="marketplace" title="Marketplace">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">storefront</span>
+        </div>
+        <div class="item-label">Shop</div>
+      </div>
+       <!-- Settings Item -->
+      <div class="grid-item" data-action="settings" title="Settings">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">settings</span>
+        </div>
+        <div class="item-label">Settings</div>
+      </div>
+       <!-- Help/Support Item -->
+       <div class="grid-item" data-action="support" title="Help & Support">
+        <div class="icon-background">
+          <span class="material-symbols-outlined">help_center</span>
+        </div>
+        <div class="item-label">Help</div>
+      </div>
+    </div>
+
+    <!-- Recent Activities Section -->
+    <div class="recent-activities">
+      <h3>Recent Activities</h3>
+      <div class="activity-list" id="activityList">
+        <!-- Activities will be loaded here -->
+        <p id="loadingActivities">Loading activities...</p>
+        <p id="noActivities" style="display: none;">No recent activities found.</p>
+      </div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner">
+      Boost your earnings! Check out new affiliate programs in the Network tab.
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <!-- Content (content.html) - Leftmost -->
+    <div class="nav-item" data-target-url="content.html" title="Content">
+      <span class="material-symbols-outlined">edit_square</span> <!-- Changed from 'create' to match grid -->
+    </div>
+    <!-- Tools (tools.html) -->
+    <div class="nav-item" data-target-url="tools.html" title="Tools">
+      <span class="material-symbols-outlined">build</span>
+    </div>
+    <!-- Center Logo Button (Home - home.html) - Active on this page -->
+    <div class="center-button-nav active" data-target-url="home.html" title="Home">
+        <img src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/wconnect.png?alt=media&token=b7bcc6ee-f8dc-44a2-a6d6-7c713f6f3eff" alt="Home">
+    </div>
+    <!-- Business (business.html) -->
+    <div class="nav-item" data-target-url="business.html" title="Business">
+      <span class="material-symbols-outlined">business_center</span>
+    </div>
+    <!-- Profile (user-profile.html) - Rightmost -->
+    <div class="nav-item" data-target-url="userprofile.html" title="Profile">
+      <span class="material-symbols-outlined">account_circle</span>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+        authDomain: "daisy-n7g20a.firebaseapp.com",
+        databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+        projectId: "daisy-n7g20a",
+        storageBucket: "daisy-n7g20a.appspot.com",
+        messagingSenderId: "225362605902",
+        appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+     };
+
+    // Initialize Firebase App
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    } else {
+      firebase.app();
+    }
+
+    // Get Firebase service instances
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // DOM Elements
+    const userNameElement = document.getElementById('userName');
+    const memberIdElement = document.getElementById('memberId');
+    const unilevelIncomeElement = document.getElementById('unilevelIncome');
+    const tokenBalanceElement = document.getElementById('tokenBalance');
+    const activityListElement = document.getElementById('activityList');
+    const loadingActivitiesElement = document.getElementById('loadingActivities');
+    const noActivitiesElement = document.getElementById('noActivities');
+    const pageLoadingElement = document.getElementById('pageLoading');
+    const pageLoadingText = pageLoadingElement.querySelector('.loading-text');
+
+    // Header Icons
+    const notificationsIcon = document.getElementById('notificationsIcon'); // Get notification icon element
+    const messagesIcon = document.getElementById('messagesIcon');       // Get messages icon element
+    const notificationBadge = document.getElementById('notificationBadge');
+    const messageBadge = document.getElementById('messageBadge');
+    const signOutIcon = document.getElementById('signOutIcon');
+
+    // --- Helper Function to Format Currency ---
+    function formatCurrency(amount) {
+      // Ensure amount is treated as a number, default to 0 if null/undefined
+      const numericAmount = Number(amount) || 0;
+      return '₱' + numericAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+     // --- Helper Function to Format Date ---
+    function formatDate(timestamp) {
+        if (!timestamp || !timestamp.toDate) return 'N/A'; // Check if it's a Firestore timestamp
+        const date = timestamp.toDate();
+        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        return date.toLocaleString(undefined, options);
+    }
+
+
+    // --- Fetch and Display User Data ---
+    async function fetchAndDisplayUserData(user) {
+        try {
+            const userDocRef = db.collection('users').doc(user.uid);
+            const userDoc = await userDocRef.get();
+
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                console.log("User data fetched:", userData);
+
+                // Update User Info
+                // Use displayName from Firebase Auth first, then Firestore, then default
+                const displayName = user.displayName || userData.displayName || 'User';
+                userNameElement.textContent = `Welcome, ${displayName}`;
+                 // Display memberId from Firestore if available
+                memberIdElement.textContent = `ID: ${userData.memberId || 'N/A'}`;
+
+                // Update Income Details - Use data from Firestore
+                // Ensure fields exist and default to 0 if not
+                unilevelIncomeElement.textContent = formatCurrency(userData.unilevel_income); // Changed from level_income
+                tokenBalanceElement.textContent = formatCurrency(userData.token_balance); // Changed from token_balance
+
+
+                // Fetch and display recent activities
+                await fetchAndDisplayActivities(user.uid);
+
+                 // Simulate fetching badge counts (replace with actual logic)
+                 // For demonstration, let's show sample counts if the elements exist
+                 if (notificationBadge) {
+                     const notificationsCount = Math.floor(Math.random() * 5); // Random number up to 4
+                     if (notificationsCount > 0) {
+                         notificationBadge.textContent = notificationsCount;
+                         notificationBadge.classList.add('visible');
+                     } else {
+                         notificationBadge.classList.remove('visible');
+                     }
+                 }
+                  if (messageBadge) {
+                     const messagesCount = Math.floor(Math.random() * 3); // Random number up to 2
+                      if (messagesCount > 0) {
+                         messageBadge.textContent = messagesCount;
+                         messageBadge.classList.add('visible');
+                     } else {
+                         messageBadge.classList.remove('visible');
+                     }
+                 }
+
+
+                // Hide page loading overlay ONLY after essential data is displayed
+                pageLoadingElement.classList.add('hidden');
+
+            } else {
+                console.warn("User document not found for UID:", user.uid);
+                userNameElement.textContent = `Welcome, ${user.displayName || 'User'}`; // Still show display name
+                memberIdElement.textContent = `ID: Not Found`;
+                unilevelIncomeElement.textContent = formatCurrency(0); // Default values
+                tokenBalanceElement.textContent = formatCurrency(0);
+                pageLoadingText.textContent = 'User data not found.';
+                 // Hide loading even if data not found, show defaults
+                pageLoadingElement.classList.add('hidden');
+                 // Optionally show a message or prompt user action
+                 // alert("Your user data could not be loaded completely.");
+            }
+
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            userNameElement.textContent = `Welcome, ${user.displayName || 'User'}`; // Still show display name
+            memberIdElement.textContent = `ID: Error`;
+            unilevelIncomeElement.textContent = formatCurrency(0); // Default values
+            tokenBalanceElement.textContent = formatCurrency(0);
+            pageLoadingText.textContent = 'Error loading data.';
+             // Hide loading on error
+             pageLoadingElement.classList.add('hidden');
+             alert("An error occurred while loading your data. Please try refreshing the page.");
+        }
+    }
+
+    // --- Fetch and Display Recent Activities ---
+    async function fetchAndDisplayActivities(userId) {
+        try {
+            loadingActivitiesElement.style.display = 'block';
+            noActivitiesElement.style.display = 'none';
+            activityListElement.innerHTML = ''; // Clear existing list
+
+            // Assuming an 'activities' collection exists for the user
+            // Path: users/{userId}/activities/{activityId}
+            // Querying a subcollection
+            const activitiesSnapshot = await db.collection('users').doc(userId).collection('activities')
+                .orderBy('timestamp', 'desc')
+                .limit(10) // Fetch latest 10 activities
+                .get();
+
+            if (activitiesSnapshot.empty) {
+                noActivitiesElement.style.display = 'block';
+            } else {
+                activitiesSnapshot.docs.forEach(doc => {
+                    const activity = doc.data();
+                    const activityItem = document.createElement('div');
+                    activityItem.classList.add('activity-item');
+
+                    // Determine amount color (credit/debit) - uses 'type' field
+                    const amountClass = activity.type === 'credit' ? 'credit' : (activity.type === 'debit' ? 'debit' : '');
+                    const amountSign = activity.type === 'credit' ? '+' : (activity.type === 'debit' ? '-' : '');
+
+                    // Choose an icon based on activity type (example)
+                    let iconName = 'receipt_long'; // Default icon for transactions
+                    if (activity.type === 'credit') iconName = 'add_card'; // Income/Credit
+                    if (activity.type === 'debit') iconName = 'credit_card_off'; // Expense/Debit/Payout
+                    // More specific icons based on description keywords
+                    if (activity.description) {
+                        const descLower = activity.description.toLowerCase();
+                        if (descLower.includes('unilevel') || descLower.includes('commission')) iconName = 'group';
+                        if (descLower.includes('token') && descLower.includes('exchange')) iconName = 'currency_exchange';
+                        if (descLower.includes('withdrawal') || descLower.includes('payout')) iconName = 'payments';
+                         if (descLower.includes('bonus')) iconName = 'redeem';
+                         if (descLower.includes('content')) iconName = 'edit_square';
+                         if (descLower.includes('analytics')) iconName = 'analytics';
+                         if (descLower.includes('network') || descLower.includes('community')) iconName = 'groups';
+                         if (descLower.includes('media')) iconName = 'perm_media'; // Match media icon
+                         if (descLower.includes('automation')) iconName = 'auto_mode'; // Match automation icon
+                         if (descLower.includes('wallet')) iconName = 'account_balance_wallet'; // Match wallet icon
+                         if (descLower.includes('marketplace') || descLower.includes('shop')) iconName = 'storefront'; // Match marketplace icon
+                         if (descLower.includes('settings')) iconName = 'settings'; // Match settings icon
+                         if (descLower.includes('support') || descLower.includes('help')) iconName = 'help_center'; // Match support icon
+                    }
+
+
+                    activityItem.innerHTML = `
+                        <div class="activity-details">
+                            <div class="activity-icon-container">
+                                <span class="material-symbols-outlined">${iconName}</span>
+                            </div>
+                            <div class="activity-info">
+                                <div class="description">${activity.description || 'Transaction'}</div>
+                                <div class="date">${formatDate(activity.timestamp)}</div>
+                            </div>
+                        </div>
+                        <div class="activity-amount ${amountClass}">
+                             ${activity.amount !== undefined ? `${amountSign} ${formatCurrency(activity.amount)}` : ''} <!-- Display amount only if exists -->
+                        </div>
+
+                    `;
+                    activityListElement.appendChild(activityItem);
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching activities:", error);
+            // Check for specific errors like missing index
+            if (error.code === 'failed-precondition') {
+                 activityListElement.innerHTML = `<p style="color: orange; font-size: 0.9em;">Loading activities requires a database index. Please check Firestore configuration.</p>`;
+            } else {
+                 activityListElement.innerHTML = '<p style="color: red;">Error loading activities.</p>';
+            }
+            noActivitiesElement.style.display = 'none'; // Hide 'no activities' message on error
+        } finally {
+            loadingActivitiesElement.style.display = 'none';
+        }
+    }
+
+    // --- Authentication State Listener ---
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            console.log("User is signed in:", user.uid);
+            // User is signed in, fetch their data
+            fetchAndDisplayUserData(user);
+        } else {
+            console.log("User is signed out. Redirecting to signin.html");
+            // Ensure loading screen is hidden before redirecting
+            pageLoadingElement.classList.add('hidden');
+            window.location.href = 'signin.html';
+        }
+    });
+
+    // --- Header Icon Navigation ---
+    if (notificationsIcon) {
+        notificationsIcon.addEventListener('click', () => {
+            console.log('Navigating to notifications.html');
+            // Optionally show loading screen
+            // pageLoadingElement.classList.remove('hidden');
+            // pageLoadingText.textContent = 'Loading notifications...';
+            window.location.href = 'notifications.html';
+        });
+    }
+
+     if (messagesIcon) {
+        messagesIcon.addEventListener('click', () => {
+            console.log('Navigating to messages.html');
+             // Optionally show loading screen
+            // pageLoadingElement.classList.remove('hidden');
+            // pageLoadingText.textContent = 'Loading messages...';
+            window.location.href = 'messages.html';
+        });
+    }
+
+    // --- Sign Out Logic ---
+    if(signOutIcon) {
+        signOutIcon.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to sign out?")) { // Optional confirmation
+                try {
+                     pageLoadingElement.classList.remove('hidden');
+                     pageLoadingText.textContent = 'Signing out...';
+                    await auth.signOut();
+                    // The onAuthStateChanged listener will handle the redirect
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Failed to sign out. Please try again.");
+                    pageLoadingElement.classList.add('hidden'); // Hide loading on error
+                }
+            }
+        });
+    }
+
+
+    // --- Bottom Navigation Handling ---
+    document.querySelectorAll('.bottom-nav .nav-item, .bottom-nav .center-button-nav').forEach(item => {
+        item.addEventListener('click', () => {
+            const targetUrl = item.dataset.targetUrl;
+            // Only navigate if targetUrl exists and it's not the current active page
+            if (targetUrl && !item.classList.contains('active')) {
+                console.log('Navigating to:', targetUrl);
+                // Show loading indicator during navigation potentially
+                // pageLoadingElement.classList.remove('hidden');
+                // pageLoadingText.textContent = 'Loading page...';
+                window.location.href = targetUrl;
+            } else if (item.classList.contains('active')) {
+                console.log('Already on this page:', targetUrl);
+                 // Optionally scroll to top or refresh if on the active page
+                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                 console.warn('Navigation item missing data-target-url attribute:', item);
+            }
+        });
+    });
+
+     // --- Quick Action Grid Handling ---
+    document.querySelectorAll('.quick-actions-grid .grid-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const action = item.dataset.action;
+            const title = item.getAttribute('title') || action;
+            console.log('Quick action clicked:', action);
+
+            // Define navigation mapping based on the user's provided map
+            const actionMap = {
+                'content-guru': 'content-guru.html',
+                'media': 'https://movie.weconnect-ph.online/index.html',
+                'analytics': 'analytics.html',
+                'community': 'network.html',
+                'monetization': 'earnings.html',
+                'affiliates': 'affiliates.html',
+                'engagement': 'audience.html',
+                'automation': 'automation.html',
+                'wallet': 'wallet.html',
+                'marketplace': 'marketplace.html',
+                'settings': 'settings.html',
+                'support': 'support.html'
+            };
+
+            const targetUrl = actionMap[action];
+
+            if (targetUrl) {
+                console.log(`Navigating to: ${targetUrl} (Action: ${action})`);
+                 // Optionally show loading screen
+                // pageLoadingElement.classList.remove('hidden');
+                // pageLoadingText.textContent = `Loading ${title}...`;
+                window.location.href = targetUrl;
+            } else {
+                alert(`Action "${title}" clicked! (Navigation path not defined)`);
+                console.warn(`Navigation path not defined for action: ${action}`);
+            }
+        });
+    });
+
+    // Prevent multi-touch zoom (optional but common for web apps)
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault(); // Prevent double-tap zoom
+      lastTouchEnd = now;
+    }, { passive: false });
+
+  </script>
+
+</body>
+</html>

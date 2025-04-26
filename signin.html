@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+  <title>Sign In - WeConnect</title>
+  <link rel="stylesheet" href="css/global.css">
+
+  <!-- Firebase v9+ Modular SDKs (UPDATED to 11.6.1) -->
+  <!-- Use type="module" and the correct CDNs -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+  <!-- Include Firestore if you plan to use it (like for last login timestamp) -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+  <!-- Add more services if needed (update version) -->
+
+  <style>
+    /* Page-specific styles for signin.html */
+    /* Add any unique styles for signin.html here */
+
+    /* Add CSS for Modals (from previous fix) */
+    .install-modal, .loading-modal { /* Added loading-modal here too */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent dark overlay */
+      display: flex; /* Use flexbox for centering */
+      justify-content: center; /* Center horizontally */
+      align-items: center; /* Center vertically */
+      z-index: 1000; /* Ensure it's on top */
+      opacity: 0; /* Start hidden */
+      visibility: hidden; /* Start invisible */
+      transition: opacity 0.3s ease, visibility 0.3s ease; /* Smooth transition */
+    }
+
+    .install-modal.visible, .loading-modal.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Added loading content styles */
+    .loading-modal .loading-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #3498db; /* Blue spinner */
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+
+     /* Styles for the install modal/banner */
+     .install-modal .install-banner {
+        cursor: pointer; /* Indicate it's clickable */
+        max-width: 300px; /* Example max width */
+     }
+     .install-modal .install-banner img {
+         max-width: 100%;
+         height: auto;
+         display: block; /* Remove extra space below image */
+     }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <!-- Adjust path based on your folder structure. ../ moves up one level -->
+      <img src="../assets/images/logo/wconnect.png" alt="WeConnect Logo">
+    </div>
+    <h1>Welcome Back!</h1>
+    <p class="subtitle">Sign in to continue your journey with WeConnect.</p>
+    <form id="signinForm">
+      <div class="input-container">
+        <input type="email" id="email" placeholder="Email Address" required>
+      </div>
+      <div class="input-container">
+        <input type="password" id="password" placeholder="Password" required>
+      </div>
+      <button type="submit">Sign In</button>
+    </form>
+
+    <div class="links">
+        <a href="forgot-password.html" class="forgot-password">Forgot Password?</a>
+        <p style="margin-top: 10px;">
+          Don't have an account? <a href="signup.html">Sign Up</a>
+        </p>
+    </div>
+  </div>
+
+  <!-- Install Modal -->
+  <div id="installModal" class="install-modal hidden">
+    <!-- Changed onclick to an ID for addEventListener -->
+    <div class="install-banner" id="installBanner">
+      <!-- Adjust path based on your folder structure -->
+      <img src="../assets/images/logo/install.png" alt="Install Banner">
+    </div>
+  </div>
+
+   <!-- Loading Modal (Identical to signup.html) -->
+  <div id="loadingModal" class="loading-modal hidden">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Signing in...</p>
+    </div>
+  </div>
+
+
+  <!-- Removed: Load your firebase-config.js (v9+ modular) -->
+  <!-- <script type="module" src="js/firebase-config.js"></script> -->
+
+  <!-- Your main script (v9+ modular) -->
+  <script type="module">
+    // Page-specific JavaScript for signin.html
+
+    // --- Firebase Configuration (UPDATED) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8",
+      authDomain: "daisy-n7g20a.firebaseapp.com",
+      databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com",
+      projectId: "daisy-n7g20a",
+      storageBucket: "daisy-n7g20a.appspot.com",
+      messagingSenderId: "225362605902",
+      appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+    };
+
+    // --- Import Firebase Functions (UPDATED CDNs) ---
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    // Include Firestore if you plan to use it (like for last login timestamp)
+    // import { getFirestore, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+    // --- Initialize Firebase ---
+    const app = initializeApp(firebaseConfig);
+
+    // --- Get Service Instances ---
+    const auth = getAuth(app);
+    // Uncomment the line below if you use Firestore in this script
+    // const db = getFirestore(app);
+
+
+    // --- Loading Indicator Functions ---
+    const loadingModal = document.getElementById('loadingModal'); // Ensure modal element exists
+
+    function showLoadingIndicator(message = 'Loading...') {
+        const loadingText = loadingModal.querySelector('p');
+        if (loadingText) {
+            loadingText.textContent = message;
+        }
+        loadingModal.classList.remove('hidden');
+        loadingModal.classList.add('visible');
+    }
+
+    function hideLoadingIndicator() {
+         loadingModal.classList.remove('visible');
+         // Add a small delay to allow fade out animation
+         setTimeout(() => {
+             loadingModal.classList.add('hidden');
+         }, 300); // Match this duration to your CSS transition time
+    }
+    // --- End Loading Indicator Functions ---
+
+
+    // --- Install Prompt Logic (Optional) ---
+    let deferredPrompt;
+    const installModal = document.getElementById('installModal'); // Ensure modal element exists
+    const installBanner = document.getElementById('installBanner'); // Ensure banner element exists
+
+    if(installBanner) { // Add event listener only if the banner element exists
+        installBanner.addEventListener('click', simulateInstall);
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('beforeinstallprompt event fired');
+        // Optionally show your install banner/modal here after the event fires
+        // if (installModal) {
+        //   installModal.classList.remove('hidden');
+        //   installModal.classList.add('visible');
+        // }
+    });
+
+    function simulateInstall() {
+        if (installModal) {
+             // Optionally hide the modal when install is triggered
+             installModal.classList.remove('visible');
+             setTimeout(() => installModal.classList.add('hidden'), 300); // Hide after fade
+        }
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                console.log('PWA install outcome:', choiceResult.outcome);
+                deferredPrompt = null; // Clear the prompt once used
+                // Maybe show a message based on outcome? (accepted/dismissed)
+            });
+        } else {
+            console.log('Install prompt not available. User may have already installed or browser doesn\'t support it.');
+            alert('PWA install not available on this browser or already installed.'); // Inform user if prompt didn't appear
+        }
+    }
+    // --- End Install Prompt Logic ---
+
+
+    // Sign-In Form Handler
+    document.getElementById('signinForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showLoadingIndicator('Signing in...'); // Show loader when submission starts
+
+      const email = document.getElementById('email').value.trim(); // Trim whitespace
+      const password = document.getElementById('password').value;
+
+      // Basic validation (optional, Firebase Auth also validates)
+      if (!email || !password) {
+         alert('Please enter email and password.');
+         hideLoadingIndicator(); // Hide loader on validation fail
+         return;
+      }
+
+
+      try {
+        // Sign in user using the imported auth service
+        // Use the signInWithEmailAndPassword method directly on the auth object
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        console.log("User signed in:", user.uid);
+
+        // Optional: Update last login time in Firestore (Example)
+        // This requires uncommenting Firestore imports and initialization
+        /*
+        if (db && user) { // Check if db was imported and user exists
+           try {
+               const userDocRef = doc(db, 'users', user.uid); // Get document reference
+               await updateDoc(userDocRef, { // Use updateDoc
+                 lastLogin: serverTimestamp() // Use imported serverTimestamp
+               });
+               console.log("Last login timestamp updated.");
+           } catch (firestoreError) {
+               console.error("Failed to update last login timestamp:", firestoreError);
+               // Decide if this error should prevent the user from proceeding
+               // alert("Sign in successful, but failed to record last login."); // Optional alert
+           }
+        } else {
+           console.log("Firestore not available or user not found for last login update.");
+        }
+        */
+
+        hideLoadingIndicator(); // Hide loader before alert
+        alert('Sign In Successful!');
+        // Redirect to the home page or dashboard
+        window.location.href = 'home.html'; // Adjust redirect location if needed
+
+      } catch (error) {
+        console.error("Sign in error:", error);
+        // Provide more user-friendly error messages
+        let errorMessage = "An unknown error occurred. Please try again.";
+        // Firebase Auth errors have specific codes
+        switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password': // Often gives wrong-password even if user-not-found for security
+                errorMessage = "Invalid email or password."; // Combine these for security
+                break;
+            case 'auth/invalid-email':
+                errorMessage = "Please enter a valid email address.";
+                break;
+            case 'auth/user-disabled': // Check if user account is disabled
+                 errorMessage = "This user account has been disabled.";
+                 break;
+            case 'auth/too-many-requests':
+                errorMessage = "Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.";
+                break;
+             case 'auth/network-request-failed':
+                errorMessage = "Network error. Please check your internet connection and try again.";
+                break;
+            // Add other Firebase Auth error codes as needed
+            default:
+                errorMessage = `An error occurred: ${error.message}`; // Fallback to general message
+        }
+        alert(`Sign In Failed: ${errorMessage}`);
+        hideLoadingIndicator(); // Hide loader on error
+      }
+    });
+
+    // Optional: Check if user is already signed in on page load
+    // Use the onAuthStateChanged method directly on the imported auth object
+    onAuthStateChanged(auth, (user) => { // Pass 'auth' as the first argument
+        if (user) {
+            // User is signed in, perhaps redirect them directly to home
+            console.log("User already signed in:", user.uid);
+            // Uncomment the line below to redirect automatically if logged in
+            // window.location.href = 'home.html';
+        } else {
+            // User is signed out
+            console.log("User is signed out.");
+        }
+    });
+
+  </script>
+  <!-- global.js - If this script contains functions needed by other modules,
+       you might need to adjust how it's loaded or make its contents available -->
+  <script src="js/global.js"></script>
+</body>
+</html>

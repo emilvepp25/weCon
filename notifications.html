@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding-top: 60px; /* Add padding to prevent content from hiding under sticky header */
+            background-color: #f4f4f4;
+        }
+
+        .sticky-header {
+            position: fixed; /* Changed to fixed for better cross-browser stickiness */
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 10px 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            box-sizing: border-box; /* Include padding in width calculation */
+        }
+
+        .back-icon {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+            margin-right: 15px;
+            line-height: 1;
+        }
+
+        .header-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        #notifications-list {
+            padding: 15px;
+        }
+
+        .notification-item {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background-color 0.3s ease;
+        }
+
+        .notification-item.unread {
+            background-color: #eef4ff; /* Slightly different background for unread */
+            /* font-weight: bold; */ /* Optionally make text bold */
+        }
+
+         .notification-item.read {
+            /* Optionally dim read notifications slightly */
+             opacity: 0.85;
+        }
+
+
+        .notification-message {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .notification-timestamp {
+            font-size: 0.8em;
+            color: #777;
+            display: block;
+        }
+
+        #loading-indicator,
+        #error-message,
+        #no-notifications {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 1em;
+        }
+
+        #error-message {
+            color: red;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="sticky-header">
+        <a href="javascript:history.back()" class="back-icon">←</a>
+        <h1 class="header-title">Notifications</h1>
+    </header>
+
+    <div id="notifications-list">
+        <div id="loading-indicator">Loading notifications...</div>
+        <div id="error-message" style="display: none;"></div>
+        <div id="no-notifications" style="display: none;">No notifications found.</div>
+        <!-- Notifications will be loaded here -->
+    </div>
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
+    <!-- Add Firestore product -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- If you're using Authentication, add it here -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> -->
+
+    <script>
+        // Your web app's Firebase configuration
+        // IMPORTANT: Replace with your actual config values
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Replace if needed
+            authDomain: "daisy-n7g20a.firebaseapp.com",
+            databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com", // Note: Firestore uses projectId, not databaseURL directly for initialization
+            projectId: "daisy-n7g20a",
+            storageBucket: "daisy-n7g20a.appspot.com",
+            messagingSenderId: "225362605902",
+            appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        } else {
+            firebase.app(); // if already initialized, use that one
+        }
+
+        const db = firebase.firestore();
+
+        const notificationsListElement = document.getElementById('notifications-list');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessageElement = document.getElementById('error-message');
+        const noNotificationsElement = document.getElementById('no-notifications');
+
+        // --- IMPORTANT ---
+        // Replace this with the actual logged-in user's ID
+        // In a real app, you'd get this from Firebase Auth:
+        // const currentUserId = firebase.auth().currentUser ? firebase.auth().currentUser.uid : null;
+        const currentUserId = "Dgvo58FPOcd650pBe85183oBqN73"; // Hardcoded for this example
+
+        // Function to fetch and display notifications
+        async function fetchNotifications(userId) {
+            if (!userId) {
+                console.error("User ID is missing. Cannot fetch notifications.");
+                loadingIndicator.style.display = 'none';
+                errorMessageElement.textContent = "Could not determine user. Please log in.";
+                errorMessageElement.style.display = 'block';
+                return;
+            }
+
+            loadingIndicator.style.display = 'block';
+            errorMessageElement.style.display = 'none';
+            noNotificationsElement.style.display = 'none';
+            notificationsListElement.innerHTML = ''; // Clear previous notifications (if any)
+
+            try {
+                // Reference to the 'notifications' collection
+                const notificationsRef = db.collection('notifications');
+
+                // Create a query against the collection.
+                // Filter by userId and order by timestamp descending (newest first)
+                const query = notificationsRef
+                    .where('userId', '==', userId)
+                    .orderBy('timestamp', 'desc');
+
+                const querySnapshot = await query.get();
+
+                loadingIndicator.style.display = 'none';
+
+                if (querySnapshot.empty) {
+                    noNotificationsElement.style.display = 'block';
+                    console.log('No matching notifications found.');
+                } else {
+                    console.log(`Found ${querySnapshot.size} notifications.`);
+                    querySnapshot.forEach((doc) => {
+                        // doc.data() is never undefined for query doc snapshots
+                        const notification = doc.data();
+                        // console.log(doc.id, " => ", notification);
+
+                        // Create list item element
+                        const item = document.createElement('div');
+                        item.classList.add('notification-item');
+                        item.classList.add(notification.isRead ? 'read' : 'unread');
+                        // Optionally add a data attribute for the document ID if needed later
+                        item.dataset.id = doc.id;
+
+                        // Format timestamp
+                        let formattedTimestamp = 'Invalid Date';
+                        if (notification.timestamp && typeof notification.timestamp.toDate === 'function') {
+                           formattedTimestamp = notification.timestamp.toDate().toLocaleString();
+                        } else {
+                           console.warn("Timestamp format unexpected for doc:", doc.id, notification.timestamp);
+                           // Handle cases where timestamp might be missing or not a Firestore Timestamp
+                        }
+
+
+                        // Set inner HTML
+                        item.innerHTML = `
+                            <span class="notification-message">${notification.message || 'No message content.'}</span>
+                            <span class="notification-timestamp">${formattedTimestamp}</span>
+                        `;
+
+                        // Append to the list
+                        notificationsListElement.appendChild(item);
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error getting notifications: ", error);
+                loadingIndicator.style.display = 'none';
+                errorMessageElement.textContent = `Error fetching notifications: ${error.message}`;
+                errorMessageElement.style.display = 'block';
+            }
+        }
+
+        // --- Trigger the fetch when the page loads ---
+        // Option 1: Simple call (if script is at the end of body)
+        fetchNotifications(currentUserId);
+
+        // Option 2: Wait for DOMContentLoaded (safer)
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     fetchNotifications(currentUserId);
+        // });
+
+        // Option 3: Check Auth State (Recommended for real apps)
+        /*
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            // User is signed in, see docs for a list of available properties
+            // https://firebase.google.com/docs/reference/js/firebase.User
+            const uid = user.uid;
+            console.log("User logged in:", uid);
+            fetchNotifications(uid);
+          } else {
+            // User is signed out
+            console.log("User is signed out.");
+            loadingIndicator.style.display = 'none';
+            notificationsListElement.innerHTML = ''; // Clear list
+            errorMessageElement.textContent = "Please log in to view notifications.";
+            errorMessageElement.style.display = 'block';
+            noNotificationsElement.style.display = 'none';
+
+            // Optionally redirect to login page
+            // window.location.href = '/login.html';
+          }
+        });
+        */
+
+    </script>
+
+</body>
+</html>

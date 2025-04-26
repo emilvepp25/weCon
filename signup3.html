@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>WeConnect - Upload Back of ID & Selfie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase v9+ Modular SDKs (UPDATED to 11.6.1) -->
+    <!-- Use type="module" and the correct CDNs -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+     <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js"></script> <!-- Added Storage -->
+    <!-- Add more services if needed (update version) -->
+
+    <!-- Removed: External firebase-config.js script -->
+    <!-- <script src="js/firebase-config.js"></script> -->
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #E3FCEC, #D6F5E7);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #059669;
+            margin-bottom: 10px;
+        }
+        h2 { /* Style for "Upload Back of ID" / "Selfie Upload" */
+            font-size: 16px;
+            font-weight: normal;
+            color: #059669;
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+        p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa; /* Inactive color */
+            border-bottom: 3px solid #e0e0e0; /* Inactive line */
+            padding-bottom: 5px;
+        }
+         .step:nth-child(1).completed, /* Step 1 is already completed */
+         .step:nth-child(2) { /* Step 2 is current */
+            color: #059669;
+            border-bottom-color: #059669;
+         }
+         .step:nth-child(1).completed:after, /* Line after step 1 is completed */
+         .step:nth-child(2):after { /* Line after step 2 is current */
+             background: #059669;
+         }
+
+
+        .step:not(:last-child)::after {
+            content: '';
+            width: 100%;
+            height: 3px;
+            background: #e0e0e0;
+            display: block;
+            margin: 0 auto;
+            position: relative;
+            top: 5px;
+            z-index: -1; /* Ensure the line is behind the step text */
+        }
+
+        .upload-section {
+            background: #f9f9f9;
+            border: 2px dashed #bbb;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            height: 200px; /* Fixed height for the upload section */
+            display: flex;
+            flex-direction: column; /* Stack icon and text */
+            justify-content: center;
+            align-items: center;
+        }
+         .upload-section.has-image {
+             padding: 0; /* Remove padding when image is shown */
+             border: none; /* Remove border when image is shown */
+             background: transparent; /* Transparent background */
+         }
+
+        .upload-section img {
+            width: 60px;
+            margin-bottom: 10px;
+        }
+        .upload-section:hover {
+            border-color: #059669;
+        }
+        .upload-section .placeholder-content { /* Wrap icon and text */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+             padding: 20px; /* Add padding back inside the placeholder div */
+             /* Center the placeholder content */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .upload-section .preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex; /* Use flex to center image within preview */
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px; /* Match container border radius */
+            overflow: hidden; /* Ensure image respects border radius */
+        }
+        .upload-section .preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensure the image fills the placeholder */
+            border-radius: 12px; /* Match container border radius */
+        }
+        .btn {
+            background-color: #059669;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #047857;
+            transform: scale(1.03);
+        }
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Styles for Modals (Copy-pasted from signup/signin) */
+        .loading-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-modal .loading-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Skip link (copied from signup2) */
+        .skip-link {
+          margin-top: 15px;
+          text-align: center;
+        }
+        .skip-link a {
+          color: #059669;
+          text-decoration: none;
+          font-size: 0.9rem;
+        }
+        .skip-link a:hover {
+          text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Your Profile</h1>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <!-- Step 1 completed, Step 2 current, Step 3 inactive -->
+            <div class="step completed">1. ID FRONT</div>
+            <div class="step">2. ID BACK</div>
+            <div class="step inactive">3. SELFIE</div>
+        </div>
+
+        <!-- Upload Back of ID Section -->
+        <h2>Upload Back of ID</h2>
+        <p>Please upload a photo of the back of your government-issued ID.</p>
+        <div class="upload-section" id="idUploadSection" onclick="document.getElementById('idFile').click()">
+             <div class="placeholder-content">
+                <!-- Ensure this path is correct -->
+                <img src="../assets/images/icons/upload.png" alt="Upload Icon" onerror="this.style.display='none'">
+                <p>Click here to upload or drag and drop your ID</p>
+             </div>
+             <div class="preview" id="idPreviewContainer">
+                <img id="idPreviewImg" alt="ID Preview" style="display: none;">
+             </div>
+        </div>
+        <input id="idFile" type="file" accept="image/*" style="display: none;">
+
+        <!-- Upload Selfie Section -->
+        <h2>Selfie Upload</h2>
+        <p>Please upload a selfie for verification.</p>
+        <div class="upload-section" id="selfieUploadSection" onclick="document.getElementById('selfieFile').click()">
+             <div class="placeholder-content">
+                 <!-- Ensure this path is correct -->
+                <img src="../assets/images/icons/upload.png" alt="Upload Icon" onerror="this.style.display='none'">
+                <p>Click here to upload or drag and drop your selfie</p>
+             </div>
+             <div class="preview" id="selfiePreviewContainer">
+                <img id="selfiePreviewImg" alt="Selfie Preview" style="display: none;">
+             </div>
+        </div>
+        <input id="selfieFile" type="file" accept="image/*" style="display: none;">
+
+        <!-- Submit Button -->
+        <button id="uploadBtn" class="btn" disabled>Submit</button>
+
+        <!-- Skip link (Added) -->
+        <div class="skip-link">
+          <!-- Link changed to home.html -->
+          <a href="home.html">I'll do it later</a>
+        </div>
+    </div>
+
+    <!-- Loading Modal (Added HTML structure) -->
+    <div id="loadingModal" class="loading-modal hidden">
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Uploading files...</p>
+      </div>
+    </div>
+
+    <!-- Main Script -->
+    <script type="module">
+        // --- Firebase Configuration (UPDATED) ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyDwldURmtljNpORmpGRacwXriPmQZjF6j8", // Your specific API Key
+          authDomain: "daisy-n7g20a.firebaseapp.com",
+          databaseURL: "https://daisy-n7g20a-default-rtdb.firebaseio.com", // Note: databaseURL is for RTDB, Firestore uses projectId
+          projectId: "daisy-n7g20a",
+          storageBucket: "daisy-n7g20a.appspot.com",
+          messagingSenderId: "225362605902",
+          appId: "1:225362605902:web:d2551cc389e78c92c3d01f"
+        };
+
+        // --- Import Firebase Functions (UPDATED CDNs) ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Use updateDoc
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+
+        // --- Initialize Firebase ---
+        const app = initializeApp(firebaseConfig);
+
+        // --- Get Service Instances ---
+        const auth = getAuth(app);
+        const db = getFirestore(app); // Use db for Firestore
+        const storage = getStorage(app); // Get Storage instance
+
+
+        // --- DOM Elements ---
+        const idFile = document.getElementById('idFile');
+        const idPreviewImg = document.getElementById('idPreviewImg');
+        const idUploadSection = document.getElementById('idUploadSection'); // Get the upload div
+
+        const selfieFile = document.getElementById('selfieFile');
+        const selfiePreviewImg = document.getElementById('selfiePreviewImg');
+        const selfieUploadSection = document.getElementById('selfieUploadSection'); // Get the upload div
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const skipLink = document.querySelector(".skip-link a"); // Get the skip link
+        const loadingModal = document.getElementById('loadingModal'); // Get the loading modal
+
+        let fileToUploadId = null; // Store File object for ID back
+        let fileToUploadSelfie = null; // Store File object for Selfie
+
+        // --- Loading Indicator Functions ---
+        function showLoadingIndicator(message = 'Loading...') {
+            const loadingText = loadingModal.querySelector('p');
+            if (loadingText) {
+                loadingText.textContent = message;
+            }
+            loadingModal.classList.remove('hidden');
+            loadingModal.classList.add('visible');
+        }
+
+        function hideLoadingIndicator() {
+             loadingModal.classList.remove('visible');
+             setTimeout(() => {
+                 loadingModal.classList.add('hidden');
+             }, 300); // Match this duration to your CSS transition time
+        }
+        // --- End Loading Indicator Functions ---
+
+
+        // Helper to handle file preview and store File object
+        function handleFileChange(fileInput, previewImgElement, uploadSectionElement, fileToUploadVar) {
+            const file = fileInput.files[0];
+            if (file) {
+                // Store the File object
+                fileToUploadVar = file;
+
+                // Create preview using FileReader
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    previewImgElement.src = ev.target.result;
+                    previewImgElement.style.display = 'block';
+                    uploadSectionElement.classList.add('has-image'); // Add class for styling
+                    // Hide placeholder content
+                    const placeholder = uploadSectionElement.querySelector('.placeholder-content');
+                    if (placeholder) placeholder.style.display = 'none';
+                    checkUploadStatus();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Clear preview and stored file if canceled
+                fileToUploadVar = null;
+                previewImgElement.src = '';
+                previewImgElement.style.display = 'none';
+                uploadSectionElement.classList.remove('has-image'); // Remove class for styling
+                 // Show placeholder content
+                const placeholder = uploadSectionElement.querySelector('.placeholder-content');
+                if (placeholder) placeholder.style.display = 'flex'; // Restore flex display
+                checkUploadStatus();
+            }
+            return fileToUploadVar; // Return the updated variable value
+        }
+
+
+        // Handle ID file upload
+        idFile.addEventListener('change', (e) => {
+            fileToUploadId = handleFileChange(e.target, idPreviewImg, idUploadSection, fileToUploadId);
+        });
+
+        // Handle Selfie file upload
+        selfieFile.addEventListener('change', (e) => {
+            fileToUploadSelfie = handleFileChange(e.target, selfiePreviewImg, selfieUploadSection, fileToUploadSelfie);
+        });
+
+
+        // Enable submit button only if both files are uploaded
+        function checkUploadStatus() {
+            // Check if both fileToUpload variables contain a File object
+            if (fileToUploadId && selfieToUploadSelfie) { // Corrected variable name typo
+                uploadBtn.disabled = false;
+            } else {
+                 uploadBtn.disabled = true;
+            }
+        }
+
+
+        // Handle form submission
+        uploadBtn.addEventListener('click', async () => {
+            // Double check before starting async operation
+            if (!fileToUploadId || !selfieToUploadSelfie) { // Corrected variable name typo
+                 alert("Please upload both the back of your ID and a selfie.");
+                 return;
+            }
+
+            showLoadingIndicator('Uploading files...');
+            uploadBtn.disabled = true; // Disable button during upload
+
+            const user = auth.currentUser;
+            if (!user) {
+                console.error("No user is currently logged in.");
+                hideLoadingIndicator();
+                alert('No user is currently logged in. Please sign up first.');
+                window.location.href = 'signup.html';
+                return;
+            }
+
+            try {
+                // --- Upload ID Back Image to Firebase Storage ---
+                showLoadingIndicator('Uploading ID back image...');
+                const idStorageRef = ref(storage, `user_ids/${user.uid}/id_back_${Date.now()}_${fileToUploadId.name}`); // Unique path
+                const idUploadTask = await uploadBytes(idStorageRef, fileToUploadId);
+                const idBackImageUrl = await getDownloadURL(idUploadTask.ref);
+                console.log("ID back image uploaded. Download URL:", idBackImageUrl);
+                // --- End Upload ID Back ---
+
+                // --- Upload Selfie Image to Firebase Storage ---
+                showLoadingIndicator('Uploading selfie image...');
+                const selfieStorageRef = ref(storage, `user_ids/${user.uid}/selfie_${Date.now()}_${fileToUploadSelfie.name}`); // Unique path
+                const selfieUploadTask = await uploadBytes(selfieStorageRef, selfieToUploadSelfie); // Corrected variable name typo
+                const selfieImageUrl = await getDownloadURL(selfieUploadTask.ref);
+                console.log("Selfie image uploaded. Download URL:", selfieImageUrl);
+                // --- End Upload Selfie ---
+
+
+                // Update user document in Firestore with image URLs
+                showLoadingIndicator('Saving profile data...');
+                const userDocRef = doc(db, "users", user.uid); // Use Firestore doc reference
+
+                await updateDoc(userDocRef, { // Use updateDoc to add/update fields
+                    idBackImage: idBackImageUrl, // Save the download URL
+                    selfieImage: selfieImageUrl,   // Save the download URL
+                    is_verified: 'pending', // Set verification status if not already set in signup2
+                    profileCompletedAt: serverTimestamp() // Optional: log when profile was fully completed
+                });
+
+                console.log('Profile updated successfully!');
+                hideLoadingIndicator(); // Hide loader
+                alert('Files successfully uploaded! Redirecting to the next step...');
+
+                // Redirect to the next step (create-pin.html)
+                setTimeout(() => {
+                    window.location.href = 'create-pin.html';
+                }, 500); // Short delay before redirect
+
+
+            } catch (error) {
+                console.error("Error during file upload or profile update:", error);
+                hideLoadingIndicator();
+                uploadBtn.disabled = false; // Re-enable button
+                 if (error.code === 'permission-denied' || (error.message && error.message.includes('PERMISSION_DENIED'))) {
+                     alert('Error: Permission denied. Check Firebase Security Rules for Firestore and Storage.');
+                 } else if (error.code && error.code.startsWith('storage/')) {
+                      alert(`Storage upload failed: ${error.message}`); // Specific Storage errors
+                 }
+                else {
+                     alert('Error updating profile: ' + error.message);
+                }
+            }
+        });
+
+        // Skip link: update user verification status and redirect
+        skipLink.addEventListener("click", async (event) => {
+          event.preventDefault(); // Prevent default link navigation
+          showLoadingIndicator("Skipping profile setup..."); // Show loader
+
+          const user = auth.currentUser;
+          if (user) {
+            try {
+              const userDocRef = doc(db, "users", user.uid);
+              // Set isVerified to "pending" and maybe add a timestamp/note about skipping
+              await updateDoc(userDocRef, {
+                  is_verified: "pending", // Assuming field name is `is_verified`
+                  skippedProfileSetupAt: serverTimestamp() // Optional: log when they skipped
+              });
+              hideLoadingIndicator(); // Hide loader on success
+              window.location.href = "home.html"; // Redirect to home.html as requested
+            } catch (error) {
+              console.error("Error updating verification status on skip:", error);
+              hideLoadingIndicator(); // Hide loader on error
+              alert("Error skipping setup: " + error.message);
+            }
+          } else {
+            console.log("No user logged in when trying to skip.");
+            hideLoadingIndicator(); // Hide loader
+            alert("No user is currently logged in. Please sign up first.");
+            window.location.href = "signup.html"; // Redirect to signup if not logged in
+          }
+        });
+
+        // Optional: Check auth state on page load to ensure user is logged in
+        // If not logged in, maybe redirect to signin or signup
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                console.log("No user logged in, redirecting to signin.");
+                // Redirect if no user is logged in
+                // alert("You must be logged in to complete your profile."); // Optional alert
+                window.location.href = "signin.html";
+            } else {
+                console.log("User logged in:", user.uid);
+                // You could optionally load existing profile data here if needed
+            }
+        });
+
+        // Initial check in case files are somehow pre-filled (unlikely with input type="file")
+        checkUploadStatus();
+
+    </script>
+</body>
+</html>

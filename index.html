@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Welcome - WeConnect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent scrollbars caused by video */
+            font-family: sans-serif;
+        }
+
+        #bg-video {
+            position: fixed; /* Position relative to the viewport */
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -100; /* Place it behind everything else */
+            transform: translateX(-50%) translateY(-50%); /* Center the video */
+            background-size: cover; /* Ensure it covers the screen */
+            object-fit: cover; /* Scale the video while preserving aspect ratio */
+        }
+
+        .content-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            justify-content: flex-end; /* Align items to the bottom */
+            align-items: center; /* Center items horizontally */
+            padding-bottom: 15vh; /* Add padding from the bottom */
+            text-align: center;
+            /* Optional: Add a slight dark overlay for text readability */
+            /* background-color: rgba(0, 0, 0, 0.3); */
+        }
+
+        .get-started-btn {
+            display: inline-block;
+            padding: 15px 35px;
+            background-color: #007bff; /* Example button color */
+            color: white;
+            text-decoration: none;
+            border-radius: 25px; /* Rounded corners */
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .get-started-btn:hover,
+        .get-started-btn:focus {
+            background-color: #0056b3; /* Darker shade on hover/focus */
+            outline: none;
+        }
+
+         /* Optional: Add a subtle welcome message above the button */
+         .welcome-message {
+             color: white;
+             font-size: 1.5em;
+             margin-bottom: 30px;
+             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Text shadow for readability */
+         }
+
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="https://firebasestorage.googleapis.com/v0/b/daisy-n7g20a.appspot.com/o/banner.webm?alt=media&token=9f35823c-b93b-47da-b92e-879d41cab747" type="video/webm">
+        <!-- Optional: Add other formats like MP4 for broader browser compatibility -->
+        <!-- <source src="path/to/your/video.mp4" type="video/mp4"> -->
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="content-overlay">
+        <!-- Optional Welcome Message -->
+        <!-- <h1 class="welcome-message">Welcome to WeConnect</h1> -->
+
+        <a href="signup.html" class="get-started-btn">Get Started</a>
+    </div>
+
+</body>
+</html>
